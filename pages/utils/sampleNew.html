@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Load S3 HTML into GrapesJS Editor</title>
+  <link href="https://unpkg.com/grapesjs/dist/css/grapes.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+    }
+    #editor {
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+
+<button id="load-html-btn" style="margin: 10px;">Load HTML from S3</button>
+<div id="editor"></div>
+
+<script src="https://unpkg.com/grapesjs"></script>
+<script>
+  // 1. Initialize GrapesJS editor
+  const editor = grapesjs.init({
+    container: '#editor',
+    fromElement: false,
+    height: '100vh',
+    width: 'auto',
+    storageManager: false, // Disable default storage
+  });
+
+  // 2. Function to load HTML from S3 and inject into editor
+  async function loadHtmlIntoEditor(url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      const htmlText = await response.text();
+
+      // Parse the HTML to get only <body> content
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+      const bodyContent = doc.body.innerHTML;
+
+      // Optional: Extract CSS (if needed)
+      // const styles = Array.from(doc.querySelectorAll('link[rel="stylesheet"], style'))
+      //   .map(node => node.outerHTML)
+      //   .join('');
+
+      // 3. Set the body content into the editor
+      editor.setComponents(bodyContent);
+
+      // Optional: set styles too if you extracted them
+      // editor.setStyle(styles);
+
+      console.log('HTML loaded into editor.');
+    } catch (error) {
+      console.error('Failed to load HTML:', error);
+    }
+  }
+
+  // 4. Button click to load S3 HTML
+  document.getElementById('load-html-btn').addEventListener('click', () => {
+    const s3Url = 'https://imakesite.s3.eu-north-1.amazonaws.com/templates/nextly/index.html'; // CHANGE THIS
+    loadHtmlIntoEditor(s3Url);
+  });
+
+</script>
+</body>
+</html>

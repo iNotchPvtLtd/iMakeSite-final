@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GrapesJS Template Loader</title>
+  <link href="https://unpkg.com/grapesjs/dist/css/grapes.min.css" rel="stylesheet"/>
+  <style>
+    body, html {
+      margin: 0;
+      height: 100%;
+    }
+    #gjs {
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+
+<div id="gjs"></div>
+
+<script src="https://unpkg.com/grapesjs"></script>
+<script>
+  async function loadTemplateFromS3(editor, url) {
+    if (!editor || typeof editor.setComponents !== 'function') {
+      console.error('Editor instance is not ready or invalid');
+      return;
+    }
+
+    try {
+      console.log(`Fetching template from: ${url}`);
+      const response = await fetch(url);
+      console.log(`Fetch response status: ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      const html = await response.text();
+      console.log('working sample Fetched HTML ', html);
+  
+      // Parse the HTML using DOMParser
+      console.log('Parsing HTML...');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      console.log('HTML parsed successfully.');
+
+      // Extract all external resources
+      const externalStyles = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'))
+        .map(link => link.href);
+      console.log('External Styles:', externalStyles);
+      
+      const externalScripts = Array.from(doc.querySelectorAll('script[src]'))
+        .map(script => script.src);
+      console.log('External Scripts:', externalScripts);
+
+      // Extract inline styles
+      const inlineStyles = Array.from(doc.querySelectorAll('style'))
+        .map(style => style.textContent)
+        .join('\n');
+      console.log('Inline Styles (first 500 chars):', inlineStyles.substring(0, 500));
+
+      // Get the body content
+      const bodyContent = doc.body.innerHTML;
+      console.log('Body Content (first 500 chars):', bodyContent.substring(0, 500));
+
+      // Configure and load the template
+      console.log('Setting editor components...');
+      editor.setComponents(bodyContent);
+      console.log('Setting editor styles...');
+      editor.setStyle(inlineStyles);
+      console.log('Components and styles set.');
+
+      // Add external resources to the canvas
+      const canvas = editor.Canvas.getDocument();
+      if (!canvas) {
+        console.error('Canvas document not found!');
+        return;
+      }
+      
+      // Add external stylesheets
+      console.log('Adding external stylesheets to canvas...');
+      externalStyles.forEach(href => {
+        try {
+          console.log(`Adding stylesheet: ${href}`);
+          const link = canvas.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = href;
+          canvas.head.appendChild(link);
+        } catch (e) {
+          console.error(`Error adding stylesheet ${href}:`, e);
+        }
+      });
+
+      // Add external scripts
+      console.log('Adding external scripts to canvas...');
+      externalScripts.forEach(src => {
+        try {
+          console.log(`Adding script: ${src}`);
+          const script = canvas.createElement('script');
+          script.src = src;
+          // It's generally safer to append scripts to the body
+          canvas.body.appendChild(script);
+        } catch (e) {
+          console.error(`Error adding script ${src}:`, e);
+        }
+      });
+
+      console.log('External resources added.');
+      console.log('Template loaded successfully!');
+    } catch (err) {
+      console.error('Error in loadTemplateFromS3:', err);
+    }
+  }
+
+  // Initialize GrapesJS
+  const editor = grapesjs.init({
+    container: '#gjs',
+    fromElement: false,
+    height: '100%',
+    width: 'auto',
+    storageManager: false,
+    canvas: {
+      styles: [],
+      scripts: []
+    },
+    assetManager: {
+      assets: [],
+      upload: false,
+      handleAdd:()=>{
+        console.log('add asset')
+      },
+      
+    },
+    parser: {
+      htmlType: 'text/html'
+    }
+  });
+
+  // When the editor is ready, load the template
+  editor.on('load', () => {
+    console.log('GrapesJS is ready cake...');
+    const templateUrl = 'https://imakesite.s3.eu-north-1.amazonaws.com/templates/nextly/index.html';
+    loadTemplateFromS3(editor, templateUrl);
+  });
+</script>
+
+</body>
+</html>

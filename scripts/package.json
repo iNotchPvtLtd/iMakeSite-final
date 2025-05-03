@@ -1,0 +1,8 @@
+{
+    "type": "module",
+    "name": "seed-scripts",
+    "private": true,
+    "dependencies": {
+        "esm": "^3.2.25"
+    }
+}
