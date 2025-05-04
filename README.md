@@ -1,11 +1,6 @@
-### Website builder 
+### iNotch Website builder  - iMakeSite
 
 
-This is a nextjs project using [GrapeJS](https://grapesjs.com/) library to build a website builder
-
-
-
-![plot](./screenshots/example.png)
 
 
 #### Getting started
