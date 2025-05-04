@@ -14,6 +14,8 @@ const DomainModal = ({ isOpen, onClose, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    setError('');
+
     if (!domain) {
       setError('Enter your domain name to publish your fantastic website!');
       return;
@@ -26,9 +28,13 @@ const DomainModal = ({ isOpen, onClose, onSubmit }) => {
     if (isLocalhost || isValidDomain) {
       setIsSubmitting(true);
       try {
-        await onSubmit(trimmedDomain);
-        setIsSubmitting(false);
-        onClose();
+        const response = await onSubmit(trimmedDomain);
+        if (response.status === 400 && response.data.message === 'Port is already in use') {
+          setError('The specified port is already in use. Please choose a different port.');
+        } else {
+          setIsSubmitting(false);
+          onClose();
+        }
       } catch (err) {
         setError('Failed to host your website. Please try again.');
         setIsSubmitting(false);
@@ -167,13 +173,15 @@ export default function TemplateEditor() {
       
 
     useEffect(() => {
-        const htmlPath = localStorage.getItem('dynamicTemplateUrl');
-        const templateName = localStorage.getItem('dynamicTemplateUrlName');
-        setTemplateName(templateName);
-        if (!htmlPath) return;
+
         const initEditor = async () => {
             try {
                 // setLoading(true);
+
+                const htmlPath = localStorage.getItem('dynamicTemplateUrl');
+                const templateName = localStorage.getItem('dynamicTemplateUrlName');
+                setTemplateName(templateName);
+                if (!htmlPath) return;
             
                 // Fetch template HTML
                 const res = await fetch(htmlPath);
@@ -305,6 +313,7 @@ export default function TemplateEditor() {
     }, [templateId]);
 
     const handleSave = async () => {
+ 
         if (!editorRef.current) return;
 
         try {
@@ -347,9 +356,6 @@ export default function TemplateEditor() {
                 }
                
             }
-
-          
-    
            
         } catch (error) {
             console.error('Failed to save template:', error);
@@ -424,6 +430,7 @@ export default function TemplateEditor() {
                 
                // Redirect to the hosted template
                handleSaveTemplate(customizedSiteHTML, port)
+                // Redirect to the hosted template
                 // window.open(previewUrl, '_blank');
                 // window.open(templateUrl, '_blank');
 
