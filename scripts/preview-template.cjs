@@ -3,21 +3,10 @@ const path = require('path');
 const open = require('open'); // This works with open@8
 const net = require('net');
 
-function getAvailablePort(start = 3005) {
-    return new Promise((resolve) => {
-        const port = start;
-        const server = net.createServer();
-        server.listen(port, () => {
-            server.once('close', () => resolve(port));
-            server.close();
-        });
-        server.on('error', () => resolve(getAvailablePort(port + 1)));
-    });
-}
-
 (async () => {
     const app = express();
-    const port = await getAvailablePort();
+    const startPort = process.argv[2] || 3005; // Use port from arguments or default to 3005
+    const port = startPort;
 
     app.use(express.static(path.join(__dirname, 'output')));
 
