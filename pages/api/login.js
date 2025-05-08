@@ -59,23 +59,16 @@ export default async function handler(req, res) {
       path: '/',
     };
 
+    // Remove session cookie setting
     res.setHeader(
-      'Set-Cookie', 
+      'Set-Cookie',
       serialize('jwtToken', token, cookieOptions)
     );
-
-    // // Set cookie
-    // res.setHeader(
-    //   'Set-Cookie',
-    //   `jwtToken=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400; Domain=${process.env.NODE_ENV === 'development' ? 'localhost' : process.env.DOMAIN}`
-    // );
-
-    console.log('Cookie set');
-
-
-    console.log('Login successful for user:', user.email);
-    res.status(200).json({ 
+    
+    // Update response to include token directly
+   return res.status(200).json({ 
       success: true,
+      token,
       user: {
         userId: user._id.toString(),
         email: user.email

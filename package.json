@@ -27,6 +27,7 @@
     "grapesjs-react": "^4.0.1",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
+    "jwt-decode": "^4.0.0",
     "marked": "^9.1.5",
     "mongoose": "^8.14.1",
     "nanoid": "^5.1.5",

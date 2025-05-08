@@ -8,11 +8,11 @@ export const useGuestUser = () => {
 
   useEffect(() => {
     // Check if user is guest by checking for absence of JWT token
-    const jwtToken = document.cookie.includes('jwtToken');
-    setIsGuest(!jwtToken);
+    const jwtTokenExists = document.cookie.includes('jwtToken');
+    setIsGuest(!jwtTokenExists); 
 
-    // Load or generate guest name
-    if (!jwtToken) {
+
+    if (!jwtTokenExists) {
       const storedGuestName = localStorage.getItem('guestName');
       if (storedGuestName) {
         setGuestName(storedGuestName);
@@ -24,13 +24,13 @@ export const useGuestUser = () => {
     }
   }, []);
 
-  const restrictedPaths = ['/wishes', '/file-manager', '/studio'];
+  // const restrictedPaths = ['/wishes', '/file-manager', '/studio'];
 
-  useEffect(() => {
-    if (isGuest && restrictedPaths.includes(router.pathname)) {
-      router.push('/Dashboard');
-    }
-  }, [isGuest, router.pathname]);
+  // useEffect(() => {
+  //   if (isGuest && restrictedPaths.includes(router.pathname)) {
+  //     router.push('/Dashboard');
+  //   }
+  // }, [isGuest, router.pathname]);
 
   return { isGuest, guestName };
 };

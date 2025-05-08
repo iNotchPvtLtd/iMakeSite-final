@@ -20,6 +20,9 @@ export default function Dashboard() {
   const [pendingTemplate, setPendingTemplate] = useState(null);
 
   useEffect(() => {
+    console.log('Dashboard useEffect called : isGuest', isGuest);
+    console.log('Dashboard useEffect called : guestName', guestName);
+    console.log('Dashboard useEffect called : pendingTemplate', pendingTemplate);
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -218,18 +221,17 @@ export default function Dashboard() {
     <Layout>
     <div className="dashboard-container">
       <h1>Welcome to iMakeSite</h1>
-      {isGuest ? (
+      {isGuest && (
         <div className="guest-banner">
           <p> Hi, {guestName}! You're in guest mode. You can preview and customize complimentary templates.  </p>
           <button onClick={() => router.push('/login')} className="login-link">
             👉 Unlock
           </button>
         </div>
-      ) : null}
+      )} 
 
       {/* First Grid - Dashboard Features */}
-     
-        {!isGuest && (
+      {!isGuest && (
            <div className="dashboard-grid">
             <div className="dashboard-card" onClick={() => router.push('/wishes')}>
               <div className="card-icon">
@@ -261,11 +263,8 @@ export default function Dashboard() {
           <h2>Saved Templates</h2>
           <p>View and manage your saved website templates.</p>
         </div>
- 
-            
-        </div>
-
-        )}
+      </div>
+)}
 
      
 
