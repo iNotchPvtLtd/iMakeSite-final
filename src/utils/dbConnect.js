@@ -1,11 +1,17 @@
-import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://info:imakesite@imakesite.hivp8mn.mongodb.net/imakesite?retryWrites=true&w=majority';
+const mongoose = require('mongoose');
+
+const MONGODB_URI =
+  process.env.MONGODB_URI ||
+  'mongodb+srv://info:imakesite@imakesite.hivp8mn.mongodb.net/imakesite?retryWrites=true&w=majority';
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+  throw new Error(
+    'Please define the MONGODB_URI environment variable inside .env.local'
+  );
 }
 
+// Global is used here to cache the connection across hot reloads in development
 let cached = global.mongoose;
 
 if (!cached) {
@@ -23,10 +29,17 @@ async function dbConnect() {
       useUnifiedTopology: true,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts);
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => mongoose);
   }
-  cached.conn = await cached.promise;
-  console.log('Connected to MongoDB');
+
+  try {
+    cached.conn = await cached.promise;
+    console.log('✅ Connected to MongoDB');
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    throw error;
+  }
+
   return cached.conn;
 }
 

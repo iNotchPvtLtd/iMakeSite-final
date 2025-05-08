@@ -3,21 +3,21 @@ import "../styles/editor..css";
 import "../styles/global.css";
 import { SessionProvider } from "next-auth/react";
 import { useEffect } from 'react';
-import dbConnect from '../src/utils/dbConnect';
+import dbConnect from './../src/utils/dbConnect';
 import Head from 'next/head';
 
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
-  useEffect(() => {
-    const connectDB = async () => {
-      try {
-        await dbConnect();
-        console.log('Connected to MongoDB');
-      } catch (error) {
-        console.error('MongoDB connection error:', error);
-      }
-    };
-    connectDB();
-  }, []);
+  // useEffect(() => {
+  //   const connectDB = async () => {
+  //     try {
+  //       await dbConnect();
+  //       console.log('Connected to MongoDB');
+  //     } catch (error) {
+  //       console.error('MongoDB connection error:', error);
+  //     }
+  //   };
+  //   connectDB();
+  // }, []);
 
   return (
     <SessionProvider session={session}>

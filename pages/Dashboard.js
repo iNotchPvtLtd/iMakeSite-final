@@ -24,7 +24,7 @@ export default function Dashboard() {
       try {
         setLoading(true);
         
-        const fixedTemplateIds = [1,2,3,4,5,6,7,8,9];
+        const fixedTemplateIds = [1,2,3,4,5,6,7,8,9,10,11];
         
         // Fetch templates and user selections concurrently
         const [baseTemplatesResponse, userSelectionsResponse] = await Promise.all([

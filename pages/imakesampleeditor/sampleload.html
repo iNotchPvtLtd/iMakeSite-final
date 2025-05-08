@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GrapesJS Load HTML from S3</title>
+  <link href="https://unpkg.com/grapesjs/dist/css/grapes.min.css" rel="stylesheet" />
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #gjs { height: 100vh; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+
+  <div id="gjs">Loading editor...</div>
+
+  <script src="https://unpkg.com/grapesjs"></script>
+  <script>
+    const editor = grapesjs.init({
+      container: '#gjs',
+      fromElement: false,
+      height: '100%',
+      width: 'auto',
+      storageManager: false, // Disable built-in saving/loading
+      panels: {
+        defaults: [
+          {
+            id: 'options',
+            buttons: [
+              {
+                id: 'preview',
+                label: 'Preview',
+                command: 'preview',
+                togglable: true,
+              },
+            ],
+          },
+        ]
+      }
+    });
+
+    // Load HTML into GrapesJS and ensure it's in edit mode
+    function loadHTMLToEditor(htmlString) {
+      editor.setComponents(htmlString);
+      // editor.setStyle(''); // Optional: clear existing styles
+      // Force exit preview if accidentally triggered
+      editor.stopCommand('preview');
+      editor.Panels.getButton('options', 'preview')?.set('active', false);
+    }
+
+    // Fetch remote HTML from S3 (or any URL)
+    async function fetchAndLoadHTML(url) {
+      try {
+        const res = await fetch(url);
+        const html = await res.text();
+        loadHTMLToEditor(html);
+      } catch (err) {
+        console.error('Failed to load HTML from remote source:', err);
+        editor.setComponents('<div>Error loading content</div>');
+      }
+    }
+
+    // Wait for the editor to be ready
+    editor.onReady(() => {
+      const s3Url = 'https://imakesite.s3.eu-north-1.amazonaws.com/templates/tesla/index.html'; // Replace this
+      fetchAndLoadHTML(s3Url);
+    });
+
+    // Optional: prevent entering preview mode at all
+    editor.on('run:preview', () => {
+      editor.stopCommand('preview');
+      editor.Panels.getButton('options', 'preview')?.set('active', false);
+    });
+  </script>
+
+</body>
+</html>

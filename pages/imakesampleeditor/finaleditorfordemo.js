@@ -1,4 +1,3 @@
-//Below mentioned code is working for only able to edit not not  all the s3 html is render in grapejs editor with all datas are loaded from strapi but able to edit:
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -7,8 +6,157 @@ import 'grapesjs/dist/css/grapes.min.css';
 import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
 import React from 'react';
 import axios from 'axios';
-import { useGuestUser } from '../src/hooks/useGuestUser';
-import DomainModal from './components/DomainModal';
+// import { useGuestUser } from '../src/hooks/useGuestUser';
+import { useGuestUser } from '../../src/hooks/useGuestUser';
+
+
+
+const DomainModal = ({ isOpen, onClose, onSubmit }) => {
+  const [domain, setDomain] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    setError('');
+
+    if (!domain) {
+      setError('Enter your domain name to publish your fantastic website!');
+      return;
+    }
+
+    const trimmedDomain = domain.trim();
+    const isLocalhost = /^localhost(:\d+)?$/.test(trimmedDomain);
+    const isValidDomain = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/.test(trimmedDomain);
+
+    if (isLocalhost || isValidDomain) {
+      setIsSubmitting(true);
+      try {
+        const response = await onSubmit(trimmedDomain);
+        if (response.status === 400 && response.data.message === 'Port is already in use') {
+          setError('The specified port is already in use. Please choose a different port.');
+        } else {
+          setIsSubmitting(false);
+          onClose();
+        }
+      } catch (err) {
+        setError('Failed to host your website. Please try again.');
+        setIsSubmitting(false);
+      }
+    } else {
+      setError('Please enter a valid domain name or localhost:port');
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 2000,
+    }}>
+      <div style={{
+        backgroundColor: '#ffffff',
+        padding: '24px',
+        borderRadius: '8px',
+        width: '90%',
+        maxWidth: '400px',
+      }}>
+        <h2 style={{ marginTop: 0, color: '#1a1a1a' }}>Host Your Website!</h2>
+        <p style={{ color: '#4a5568' }}>Add your domain here to go live instantly.🚀</p>
+        
+        <input
+          type="text"
+          value={domain}
+          onChange={(e) => {
+            setDomain(e.target.value);
+            setError('');
+          }}
+          placeholder="example.com"
+          style={{
+            width: '100%',
+            padding: '8px 5px',
+            marginBottom: '12px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '4px',
+            fontSize: '16px',
+          }}
+        />
+        
+        {error && <p style={{ color: '#e53e3e', marginBottom: '12px' }}>{error}</p>}
+        
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#e2e8f0',
+              color: isSubmitting ? '#9ca3af' : '#1a1a1a',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              opacity: isSubmitting ? 0.7 : 1
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !domain}
+            className={domain ? 'color-wrap' : ''}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#4f46e5',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: isSubmitting || !domain ? 'not-allowed' : 'pointer',
+              opacity: isSubmitting || !domain ? 0.7 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background-color 0.3s ease'
+            }}
+          >
+            {isSubmitting ? (
+              <>
+                <span style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                Hosting...
+              </>
+            ) : (
+              'Launch Website'
+            )}
+          </button>
+        </div>
+        <style jsx>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          @keyframes colorWrap {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+          }
+          .color-wrap {
+            background: linear-gradient(270deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+            background-size: 400% 400%;
+            animation: colorWrap 4s ease infinite;
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+};
+
+// import Layout from './components/Layout';
+
 
 
 export default function TemplateEditor() {
@@ -20,6 +168,7 @@ export default function TemplateEditor() {
     const [showDomainModal, setShowDomainModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
+  
 
       const generateNumericId = (length = 3) => {
         return Math.floor(Math.random() * Math.pow(10, length));
@@ -27,55 +176,59 @@ export default function TemplateEditor() {
       
 
     useEffect(() => {
-        const htmlPath = localStorage.getItem('dynamicTemplateUrl');
-        const templateName = localStorage.getItem('dynamicTemplateUrlName');
-        setTemplateName(templateName);
-        // if (!htmlPath) return;
 
-      const initEditor = async () => {
-        try {
-        //   const res = await fetch('https://imakesite.s3.eu-north-1.amazonaws.com/templates/thumsup/index.html');
-        const res = await fetch(htmlPath);
+        const initEditor = async () => {
+            try {
+                // setLoading(true);
 
-          const html = await res.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
+                const htmlPath = localStorage.getItem('dynamicTemplateUrl');
+                const templateName = localStorage.getItem('dynamicTemplateUrlName');
+                setTemplateName(templateName);
+                if (!htmlPath) return;
+            
+                // Fetch template HTML
+                const res = await fetch(htmlPath);
+                const html = await res.text();
+
+                // Pre-process the HTML to ensure compatibility
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+    
 
                 // Initialize editor
                 const editor = grapesjs.init({
                     container: '#gjs',
+                    fromElement: false,
+                    components: doc.documentElement.innerHTML,
+                    storageManager: false,
                     height: '100vh',
                     width: 'auto',
-                    fromElement: false,
-                    components: doc.body.innerHTML,
-                    storageManager: false,
                     plugins: [grapesjsPresetWebpage],
-                    // canvas: {
-                    //   styles: [
-                    //     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-                    //     ...css
-                    //   ],
-                    //   scripts: scripts,
-                    // },
                     canvas: {
                         styles: [
-                            'https://unpkg.com/grapesjs/dist/css/grapes.min.css',
-                            'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-                            'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/css/style.css',
-                        'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/_next/static/media/a34f9d1faa5f3315-s.p.woff2'
+                            'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css'
                         ],
-                        scripts: [
-                         'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/js/script.js',
-                        'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/_next/static/chunks/fd9d1056-555af0a569cb886d.js',
-                        'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/_next/static/chunks/23-f34458a7000dafc3.js'
-       
-
-                        ], // Add any required scripts here
+                        scripts: [], // Add any required scripts here
                     },
-
- 
-
-      
+                    // deviceManager: {
+                    //     devices: [
+                    //         {
+                    //             name: 'Desktop',
+                    //             width: '',
+                    //         },
+                    //         {
+                    //             name: 'Tablet',
+                    //             width: '768px',
+                    //             widthMedia: '992px',
+                    //         },
+                    //         {
+                    //             name: 'Mobile',
+                    //             width: '320px',
+                    //             widthMedia: '480px',
+                    //         }
+                    //     ]
+                    // },
                     blockManager: {
                         appendTo: '#blocks'
                     },
@@ -383,3 +536,4 @@ export default function TemplateEditor() {
         // </Layout>
     );
 }
+
