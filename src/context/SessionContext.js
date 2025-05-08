@@ -7,7 +7,7 @@ export const SessionProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = getCookie('jwtToken');
+    const token = localStorage.getItem('jwtToken');
     if (token) {
       try {
         const decoded = jwtDecode(token);

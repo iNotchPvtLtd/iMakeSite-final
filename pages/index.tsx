@@ -1,13 +1,16 @@
-import { useEffect } from "react";
-import { useRouter } from 'next/router';
+// pages/index.tsx
+import { GetServerSideProps } from 'next';
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  return {
+    redirect: {
+      destination: '/login',
+      permanent: false, // Set to true if this redirect is permanent
+    },
+  };
+};
 
 export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.push('/login');
-  }, [router]);
-
   return (
     <div className="loading-wrapper">
       <div className="loading-content">

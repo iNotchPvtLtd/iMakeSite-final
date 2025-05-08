@@ -1,5 +1,4 @@
 import "grapesjs/dist/css/grapes.min.css";
-import "../styles/editor..css";
 import "../styles/global.css";
 import Head from 'next/head';
 import { SessionProvider } from '../src/context/SessionContext';
