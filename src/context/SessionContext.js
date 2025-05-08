@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import jwtDecode from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 
 const SessionContext = createContext(null);
 
@@ -7,7 +7,7 @@ export const SessionProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('jwtToken');
+    const token = getCookie('jwtToken');
     if (token) {
       try {
         const decoded = jwtDecode(token);
