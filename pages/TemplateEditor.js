@@ -1,5 +1,3 @@
-//Below mentioned code is working for only able to edit not not  all the s3 html is render in grapejs editor with all datas are loaded from strapi but able to edit:
-
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import grapesjs from 'grapesjs';
@@ -9,7 +7,8 @@ import React from 'react';
 import axios from 'axios';
 import { useGuestUser } from '../src/hooks/useGuestUser';
 import DomainModal from './components/DomainModal';
-
+import blockBasic from 'grapesjs-blocks-basic';
+import FormPlugin from 'grapesjs-plugin-forms';
 
 export default function TemplateEditor() {
     const router = useRouter();
@@ -19,6 +18,7 @@ export default function TemplateEditor() {
     const { isGuest, guestName } = useGuestUser();
     const [showDomainModal, setShowDomainModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [dynamicHeadContent, setDynamicHeadContent] = useState('');
 
 
       const generateNumericId = (length = 3) => {
@@ -35,11 +35,16 @@ export default function TemplateEditor() {
       const initEditor = async () => {
         try {
         //   const res = await fetch('https://imakesite.s3.eu-north-1.amazonaws.com/templates/thumsup/index.html');
-        const res = await fetch(htmlPath);
+            const res = await fetch(htmlPath);
+            const html = await res.text();
 
-          const html = await res.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const headContent = doc.head.innerHTML;
+            setDynamicHeadContent(headContent);
+
+        
 
                 // Initialize editor
                 const editor = grapesjs.init({
@@ -49,7 +54,7 @@ export default function TemplateEditor() {
                     fromElement: false,
                     components: doc.body.innerHTML,
                     storageManager: false,
-                    plugins: [grapesjsPresetWebpage],
+                    plugins: [grapesjsPresetWebpage, FormPlugin, blockBasic],
                     // canvas: {
                     //   styles: [
                     //     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
@@ -61,8 +66,9 @@ export default function TemplateEditor() {
                         styles: [
                             'https://unpkg.com/grapesjs/dist/css/grapes.min.css',
                             'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+                            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
                             'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/css/style.css',
-                        'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/_next/static/media/a34f9d1faa5f3315-s.p.woff2'
+                            'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/_next/static/media/a34f9d1faa5f3315-s.p.woff2'
                         ],
                         scripts: [
                          'https://imakesite.s3.eu-north-1.amazonaws.com/templates/pets/js/script.js',
@@ -149,6 +155,7 @@ export default function TemplateEditor() {
           }
                 `;
                 document.head.appendChild(style);
+                
 
                 // editor.Canvas.getBody().style.width = '100px';
                 editorRef.current = editor;
@@ -248,6 +255,28 @@ export default function TemplateEditor() {
             }
 
             const customizedSiteHTML = editorRef.current.getHtml();
+            console.log('dynamicHeadContent data', dynamicHeadContent);
+            console.log('document.querySelector.head.innerHTML', document.querySelector('head').outerHTML);
+           
+    
+            const finalHtml = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              ${dynamicHeadContent}  <!-- your template headContent -->
+              <style>
+                ${editorRef.current.getCss()}  <!-- GrapesJS inline styles -->
+              </style>
+            </head>
+            <body>
+              ${editorRef.current.getHtml()} <!-- GrapesJS canvas HTML -->
+            </body>
+            </html>
+            `.trim();
+            
+            
+            console.log('finalHtml data', finalHtml);
+
             const customizedSiteCSS = editorRef.current.getCss();
             
 
@@ -266,7 +295,7 @@ export default function TemplateEditor() {
             const response = await axios.post('/api/hostTemplate', {
                 randomTemplateId,
                 templateName,
-                customizedSiteHTML,
+                finalHtml,
                 customizedSiteCSS,
                 domain,
                 guestName
@@ -280,7 +309,7 @@ export default function TemplateEditor() {
                const port = /^localhost:(\d+)$/.exec(domain.trim())?.[1];
                 
                // Redirect to the hosted template
-               handleSaveTemplate(customizedSiteHTML, port)
+               handleSaveTemplate(finalHtml, port)
                 // Redirect to the hosted template
                 // window.open(previewUrl, '_blank');
                 // window.open(templateUrl, '_blank');
